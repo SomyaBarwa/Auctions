@@ -1,0 +1,119 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %} 
+    <h2 style="float: left;">Listing: {{ listing.title }}</h2>
+
+    <div class="watchlist mx-2" style="text-align: right;">
+      {% if user.is_authenticated %}
+        {% if watchlisted %}
+          <form action="{% url 'remove' pk %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Remove from Watchlist</button>
+          </form>
+        {% else %}
+        <form action="{% url 'add' pk %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">Add to Watchlist</button>
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+    
+    {% if message %}
+      <div class="alert alert-danger">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        {{message}} 
+     </div>
+    {% endif %}
+
+
+
+    <div class="listing-details text-center">
+        <div style="position: relative; margin-right: 15%;">
+          <img src="{{ listing.image }}" class="item-img" height="400" alt="{{ listing.title }}">
+        </div>
+        <h4><strong>{{ listing.description }}</strong></h4>
+        <h2>Price: ${{ listing.price }}</h2>
+        
+        <!-- Watchlist button -->
+        <!--
+          <form action="{% url 'watchlist' %}" method="post" id="watch-form">
+          {% csrf_token %}
+          <button id="watchlist-btn">Add to Watchlist</button>
+          </form>
+        -->          
+
+        {% if bid.active %}
+          <h5>
+              {{ bid.counter }} bid(s) so far.
+          </h5>
+          {% if listing.owner != request.user %}
+            <!-- Bid form -->
+
+            <form action="{% url 'bid' pk %}" method="post" id="bid-form">
+              {% csrf_token %}
+              <div class="d-flex justify-content-center">
+                <div class="p-2 bd-highlight">
+                  <input type="number" id="bid-amount" name="bid-amount" min="1" placeholder="Bid" class="form-control">
+                </div>
+                <div class="p-2 bd-highlight">
+                  <button type="submit" class="btn btn-primary mb-2">Place Bid</button>
+                </div>
+              </div>
+            </form>
+
+          {% else %}
+            <!-- Close auction button -->
+            <form action="{% url 'close' pk %}" method="post">
+              {% csrf_token %}
+              <button class="btn btn-warning btn-lg btn-block" type="submit">Close Auction</button>
+            </form>
+          {% endif %}
+          
+        {% else %}
+          {% if bid.bidder == request.user %}
+            <!-- Winning status message (if user has won the auction) -->
+            <h3>Congratulations! You have won this auction.<h3>
+          {% elif listing.owner == request.user %}
+            <h3>Congratulations! Your item has been purchased by {{bid.bidder}}</h3>
+          {% else %}
+            <h3>The auction of this item has been closed by its owner</h3>
+          {% endif %} 
+        {% endif %}
+
+        <!-- Comments section -->
+        <hr class="my-4" style="width: 50%; margin-left: 25%;">
+        <div class="be-comment-block" style="margin-top: 30px;">
+          <h1 class="comments-title">Comments ({{ count }})</h1>
+          
+          {% for comment in comments %}
+            <!-- Comment -->
+            <div class="be-comment">
+              <div class="be-comment-content">
+                
+                  <span class="be-comment-name">
+                    <p>{{ comment.author }}</p>
+                  </span>
+                  <span class="be-comment-time">
+                    <i class="fa fa-clock-o"></i>
+                    {{ comment.created_date }}
+                  </span>
+          
+                <p class="be-comment-text">
+                  {{ comment.body }}
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+          
+          <!-- Add comment form -->
+          <form action="{% url 'comment' pk %}" method="post" style="margin-top: 1.3em;" id="comment-form">
+            <label for="comment-text" style="font-size:x-large;">Add a comment</label>
+            {{ form.as_p }}
+            {% csrf_token %}
+            <button class="btn btn-primary btn-lg btn-block" type="submit">Add Comment</button>
+          </form>
+
+    </div>
+{% endblock %}
